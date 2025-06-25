@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="../imagens/logo/Símbolo.svg">
+    <link rel="stylesheet" href="../estilos/perfilUsuario.css">
+    <link rel="stylesheet" href="../estilos/Perfil/UpdateEstabelecimento.css">
+    <title>LocalTop</title>
+</head>
+<body>
+    <h1>Adicionar LocalTop</h1>
+            <p>Crie um perfil para o seu negócio</p>
+            <hr>
+            <form>
+                <div class="NomeEmailFotoEstabe">
+                    <div class="NomeEmailEstabele">
+                        <div class="nomeEstabele">
+                            <label for="nomeEstabele">Nome do Estabelecimento</label>
+                            <input type="text" id="nomeEstabele" name="nome">
+                        </div>
+                        <div class="TelefoneCnpj">
+                            <div class="telefone">
+                                <label for="telefone">Número de Telefone</label>
+                                <input type="text" id="telefone" name="telefone" maxlength="15">
+                            </div>
+                            <div class="cnpj">
+                                <label for="cnpj">CNPJ</label>
+                                <input type="text" id="cnpj" name="cnpj" maxlength="18">
+                            </div>
+                            <div class="cep">
+                                <label for="cep">CEP</label>
+                                <div style="display: flex; flex-direction: row;justify-content: end;align-items: center">
+                                    <input type="text" id="cep" name="cep" maxlength="9">
+                                    <button type="button" id="buscarCEP" style="position: absolute;border: none;background-color: transparent;width: 2rem;height: 2rem"><img src="../imagens/SVGs/pesquisar.svg" style="height: 100%; width: 100%"/></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="Endereco">
+                            <div class="BairroCidadeEstado">
+                                <div class="estado">
+                                    <label for="estado">Estado</label>
+                                    <input type="text" id="estado" name="estado" disabled>
+                                </div>
+                                <div class="cidade">
+                                    <label for="cidade">Cidade</label>
+                                    <input type="text" id="cidade" name="cidade" disabled>
+                                </div>
+                                <div class="bairro">
+                                    <label for="bairro">Bairro</label>
+                                    <input type="text" id="bairro" name="bairro" disabled>
+                                </div>
+                            </div>
+                            <div class="RuaNumero">
+                                <div class="rua">
+                                    <label for="endereco">Endereco</label>
+                                    <input type="text" id="endereco" name="rua" disabled>
+                                </div>
+                                <div class="numero">
+                                    <label for="numero">Número</label>
+                                    <input type="text" id="numero" name="numero">
+                                </div>
+                            </div>
+                            <div class="complemento">
+                                <label for="complemento">Complemento</label>
+                                <input type="text" id="complemento" name="complemento" >
+                            </div>
+                        </div>
+                    </div>
+                    <div class="InputFotoEstabele" >
+                        <div id="Estabelecimentoimg" class="Estabelecimentoimg"><button class="prevImg" id="prevImg" type="button"><img src="../imagens/SVGs/AnteriorSeta.svg" alt="imagem anterior"/></button><button class="nextImg" id="nextImg" type="button"><img src="../imagens/SVGs/ProximaSeta.svg" alt="proxima imagem"/></button></div>
+                        <div class="IdentifierDelete">
+                            <label for="fileEstabele">
+                                <svg width="30px" height="30px" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="none">
+                                    <path fill="#3E996F" fill-rule="evenodd" d="M9 17a1 1 0 102 0v-6h6a1 1 0 100-2h-6V3a1 1 0 10-2 0v6H3a1 1 0 000 2h6v6z"/>
+                                </svg>
+                            </label>
+                            <div class="spans" id="spans">
+                                <p>Nenhuma imagem Adicionada</p>
+                            </div>
+                            <button type="button" class="deleteImg" id="deleteImg"><img src="../imagens/SVGs/delete.svg" alt="excluir imagem"/></button>
+                        </div>
+                        <input type="file" id="fileEstabele" name="file" accept="image/*"  style="display: none" multiple>
+                    </div>
+                </div>
+                <div id="btns" class="btnEstabelecimento">
+                    <button type="button" class="criarEstabelecimento">Criar</button>
+                </div>
+            </form>
+</body>
+</html>

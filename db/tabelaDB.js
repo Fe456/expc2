@@ -52,7 +52,7 @@ const Estabelecimento = sequelize.define('Estabelecimento', {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
-        allowNull: false
+        allowNull: false,
     },
     Nome: {
         type: DataTypes.STRING,
@@ -212,15 +212,6 @@ const Avaliacao = sequelize.define('Avaliacao', {
         type: DataTypes.DATE,
         allowNull: false
     },
-    ID_oferta: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: Oferta,
-            key: 'ID_oferta'
-        },
-        onDelete: 'CASCADE'
-    },
     ID_usuario: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -229,8 +220,17 @@ const Avaliacao = sequelize.define('Avaliacao', {
             key: 'ID_usuario'
         },
         onDelete: 'CASCADE'
-    }}, {
-        tablenName: 'Avaliacao',
+    },
+    ID_estabelecimento: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: Estabelecimento,
+          key: 'ID_estabelecimento'
+        },
+        onDelete: 'CASCADE'
+      }}, {
+        tableName: 'Avaliacao',
         timestamps: false,
 });
 const Favoritos = sequelize.define('Favoritos', {
@@ -297,7 +297,6 @@ const Historico = sequelize.define('Historico', {
 Estabelecimento.belongsTo(Usuario, { foreignKey: 'ID_usuario', onDelete: 'CASCADE' });
 Oferta.belongsTo(Estabelecimento, { foreignKey: 'ID_estabelecimento', onDelete: 'CASCADE' });
 Oferta.belongsTo(Servico, { foreignKey: 'ID_servico', onDelete: 'CASCADE' });
-Avaliacao.belongsTo(Oferta, { foreignKey: 'ID_oferta', onDelete: 'CASCADE' });
 Avaliacao.belongsTo(Usuario, { foreignKey: 'ID_usuario', onDelete: 'CASCADE' });
 FotosEstabelecimento.belongsTo(Estabelecimento, { foreignKey: 'ID_estabelecimento', onDelete: 'CASCADE' });
 Favoritos.belongsTo(Usuario, { foreignKey: 'ID_usuario', onDelete: 'CASCADE' });
@@ -318,7 +317,7 @@ Usuario.hasMany(Historico, {
 });
 Estabelecimento.hasMany(FotosEstabelecimento, {
   foreignKey: 'ID_estabelecimento',
-  as: 'FotosEstabelecimentos',
+  as: 'fotos',
   onDelete: 'CASCADE'
 });
 
@@ -344,7 +343,7 @@ Estabelecimento.hasMany(Historico, {
 });
 
 Oferta.hasMany(Avaliacao, {
-  foreignKey: 'ID_oferta',
+  foreignKey: 'ID_usuario',
   as: 'Avaliacao',
   onDelete: 'CASCADE'
 });

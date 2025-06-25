@@ -7,6 +7,12 @@ const chkAvaliacoes = document.querySelectorAll('input[name="avaliacao"]');
 const rangePreco = { min: 0, max: 10000 }; // pegue do seu <input type="range"> ou de dois inputs
 const inputCidade = document.querySelector('#cidades-choice');
 
+function abrirEstabelecimento(id) {
+    localStorage.setItem("estabelecimentoSelecionado", id);
+    console.log(id);
+    window.location.href = "estabelecimento";
+}
+
 // 2. Função para ler os checks
 function getChecked(nodeList) {
     return Array.from(nodeList)
@@ -41,43 +47,67 @@ btnAplicar.addEventListener('click', async () => {
             nome:Search,
             nota: nota
         })
-
     })
+    const auth = await fetch("/auth/estado").then(r => r.json());
+    const usuarioId = auth.usuarioId;
+    const responseE = await fetch(`/api/estabelecimento/usuario/${usuarioId}`);
+    const estabelecimentos = await responseE.json();
     if(response.ok) {
-        const dados =await response.json();
-        console.log(dados)
+        const dados = await response.json();
+        const idEstabelecimento = estabelecimentos.id;
+        estabelecimentos.forEach(est => {
+            console.log("ID do Estabelecimento:", est.ID_estabelecimento);
+          });
 
         const grade = document.getElementById('grade-produtos');
         grade.innerHTML = '';
-        dados.forEach(estab => {
-
+        for (const estab of dados) {
+            const estMatch = estabelecimentos.find(e => e.Cnpj === estab.Cnpj);
+            if (!estMatch) {
+                console.warn('Estabelecimento sem correspondência:', estab);
+                continue;
+            }
+            const fotoId = estMatch.fotos && estMatch.fotos.length > 0 ? estMatch.fotos[0].ID_foto : null;
+        
+            let foto = 'imagens/placeholder.png';
+            if (fotoId) {
+                try {
+                    const imgResponse = await fetch(`/api/estabelecimento/imagem/${fotoId}`);
+                    if (imgResponse.ok) {
+                        const blob = await imgResponse.blob();
+                        foto = URL.createObjectURL(blob);
+                    }
+                } catch (error) {
+                    console.warn('Erro ao buscar imagem:', error);
+                }
+            }
+        
+            // agora crie o card usando o "foto" já correto
+        
             const nome = estab.Nome || '—';
-            const media = estab.Ofertas[0].Avaliacao[0].Nota || 'Sem avaliações';
-            const foto = estab.fotoSrc || 'imagens/placeholder.png';
-
-            // Pega a primeira oferta, se existir
+            let media = 'Sem avaliações';
+            if (estab.Ofertas && estab.Ofertas.length > 0 && estab.Ofertas[0].Avaliacao && estab.Ofertas[0].Avaliacao.length > 0) {
+                media = estab.Ofertas[0].Avaliacao[0].Nota;
+            }
             const oferta = (estab.Ofertas && estab.Ofertas[0]) || {};
             const servico = oferta.servicoNome || '—';
             const desc = oferta.Descricao || 'Sem descrição';
-            const valor = oferta.Valor != null
-                ? `R$ ${oferta.Valor.toFixed(2)}`
-                : 'Preço indisponível';
-
+            const valor = 'R$ 30,00';
+        
             const card = document.createElement('div');
             card.className = 'produto';
-
+        
             card.innerHTML = `
-        <div class="imagem-container">
-          <img src="${foto}" alt="Foto de ${nome}" />
-          <button class="favorito">❤️</button>
-        </div>
-        <h4><a href="estabelecimento" style="color: black; text-decoration: none"> ${nome} <span class="avaliacao">★ ${media} </a> </span></h4>
-        <h5>${servico}</h5>
-        <p>${desc}</p>
-        <h4>Preço: ${valor}</h4>
-      `;
+              <div class="imagem-container">
+                <img src="${foto}" alt="Foto de ${nome}" />
+                <button class="favorito">❤️</button>
+              </div>
+              <h4><a onClick="abrirEstabelecimento(${estMatch.ID_estabelecimento}); return false;" style="color: black; text-decoration: none"> ${nome} <span class="avaliacao">★ ${media} </a> </span></h4>
+              <h4>Preço: ${valor}</h4>
+            `;
+        
             grade.appendChild(card);
-        })
+        }
     }
 });
 btnLimpar.addEventListener('click', () => {
@@ -94,14 +124,16 @@ btnLimpar.addEventListener('click', () => {
 
 
 async function listarEstabelecimentos() {
+    console.log('Entrou em listarEstabelecimentos');
     try {
-        const resp = await fetch('/api/estabelecimentos-completos');
+        const resp = await fetch(`/api/estabelecimentos-completos`);
+        console.log('Resposta da API estabelecimentos-completos:', resp);
         if (!resp.ok) {
             console.log(`Status ${resp.status}`);
             return
         }
         const estabelecimentos = await resp.json();
-        // console.log('JSON da API →', estabelecimentos);
+        console.log('Dados estabelecimentos:', estabelecimentos);
 
         if (!Array.isArray(estabelecimentos)) {
             console.error('Esperava um array, recebi:', estabelecimentos);
@@ -112,16 +144,24 @@ async function listarEstabelecimentos() {
         grade.innerHTML = '';
 
         for (const estab of estabelecimentos) {
-            console.log(estab.ID_estabelecimento)
-            const responseImg = await fetch(`/api/estabelecimento/imagem/${estab.ID_estabelecimento}`)
-            console.log(responseImg)
-            if (responseImg.ok) {
-                const dados = await responseImg.json();
-                console.log(dados)
+            console.log('Processando estabelecimento:', estab.ID_estabelecimento);
+            try {
+                console.log(estab.ID_estabelecimento);
+                const responseImg = await fetch(`/api/estabelecimento/imagem/${estab.ID_estabelecimento}`);
+                let foto = '../imagens/fachada-do-estabelecimento.jpg';
+                console.log('Resposta da imagem:', responseImg);
+                if (responseImg.ok) {
+                    const blob = await responseImg.blob();
+                    console.log(blob);
+                    foto = URL.createObjectURL(blob);
+                    console.log("URL da imagem criada:", foto);
+                }
+            } catch (e) {
+                console.error("Erro ao carregar imagem", e);
             }
             const nome = estab.Nome || '—';
             const media = estab.Ofertas[0].Avaliacao[0].Nota || 'Sem avaliações';
-            const foto = estab.fotoSrc || 'https://placehold.co/200x200';
+            
 
             // Pega a primeira oferta, se existir
             const oferta = (estab.Ofertas && estab.Ofertas[0]) || {};

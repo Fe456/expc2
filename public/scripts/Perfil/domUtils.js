@@ -1,7 +1,195 @@
-let fotos = []
-let fotoMostrada;
+import { fotos, fotoMostrada, setFotoMostrada } from '../estabelecimentoStore.js';
 
-function verificarNome(nome) {
+export const mostrarFoto = () => {
+    const input = document.getElementById('file');
+    const img = document.getElementById('Perfilimg');
+    img.style.backgroundImage = `url(${URL.createObjectURL(input.files[0])})`;
+}
+
+export function MostrarSenha() {
+    const Atual = document.getElementById('senhaAtual');
+    const campoSenha = document.getElementById('novaSenha');
+    const campoSenha2 = document.getElementById('confirmarNovaSenha');
+    const img = document.querySelectorAll('.imgOlho');
+    if (campoSenha.type === 'password') {
+        Atual.type = 'text';
+        campoSenha.type = 'text';
+        campoSenha2.type = 'text';
+        for (let i = 0; i < img.length; i++) {
+            img[i].src = '../imagens/SVGs/olho-fechado.svg';
+        }
+    } else {
+        Atual.type = 'password';
+        campoSenha.type = 'password';
+        campoSenha2.type = 'password';
+        for (let i = 0; i < img.length; i++) {
+            img[i].src = '../imagens/SVGs/olho-aberto.svg';
+        }
+    }
+}
+
+export function mascaraCPF(input) {
+    let cpf = input.value.replace(/\D/g, "").slice(0, 11); // apenas números, máximo de 11 dígitos
+
+    // Aplica a máscara de acordo com tamanho do CPF
+    if (cpf.length > 9) {
+        cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, "$1.$2.$3-$4");
+    } else if (cpf.length > 6) {
+        cpf = cpf.replace(/(\d{3})(\d{3})(\d{1,3})/, "$1.$2.$3");
+    } else if (cpf.length > 3) {
+        cpf = cpf.replace(/(\d{3})(\d{1,3})/, "$1.$2");
+    }
+
+    input.value = cpf;
+}
+
+export function validaCPF(cpf) {
+    cpf = cpf.replace(/\D/g, '');
+
+    if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+
+    const calcDig = (factor, max) => {
+        let total = 0;
+        for (let i = 0; i < max; i++) {
+            total += parseInt(cpf[i]) * (factor--);
+        }
+        let resto = (total * 10) % 11;
+        return resto === 10 ? 0 : resto;
+    };
+
+    const dig1 = calcDig(10, 9);
+    const dig2 = calcDig(11, 10);
+
+    return dig1 === parseInt(cpf[9]) && dig2 === parseInt(cpf[10]);
+}
+
+export function msgValidaCPF() {
+    const cpf = document.getElementById('cpf').value;
+
+    if (!validaCPF(cpf)) {
+        Swal.fire(
+            'CPF Inválido',
+            '',
+            'error'
+        );
+        document.getElementById('cpf').style.border = '1px solid rgb(202, 50, 121)';
+        return false;
+    }
+    return true;
+}
+
+export function formatarCPF(cpf) {
+    cpf = cpf.toString().padStart(11, '0');
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+}
+
+export function ValidarNome(nome) {
+    const regex = /^[A-Za-zÀ-ÿ]+(?:\s+[A-Za-zÀ-ÿ]+)+$/;
+    if (nome.length < 8 || !regex.test(nome)) {
+        Swal.fire(
+            'Nome Inválido',
+            'Por favor, insira um nome completo.',
+            'error'
+        );
+        document.getElementById('nome').style.border = '1px solid rgb(202, 50, 121)';
+        return false;
+    }
+    return true;
+}
+
+export function validarEmail(email) {
+    const regex = /^[A-Za-z0-9._!#$%&*+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+    if (!regex.test(email)) {
+        Swal.fire(
+            'Email Inválido',
+            'Por favor, insira um email v&aacute;lido.',
+            'error'
+        )
+        document.getElementById('email').style.border = '1px solid rgb(202, 50, 121)';
+        return false;
+    }
+    return true;
+}
+
+export function validarSenhas(senha, senhaConfirmar) {
+    let mascara = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%&*]).{8,}$/
+
+
+    if (senha.length < 8) {
+        Swal.fire(
+            'Senha Fraca',
+            'A senha deve ter pelo menos 8 caracteres.',
+            'error'
+        );
+        document.getElementById('senha').style.outline = '1px solid rgb(202, 50, 121)';
+        document.getElementById('confirmarsenha').style.outline = '1px solid rgb(202, 50, 121)';
+        return false;
+    }
+    if (!mascara.test(senha)) {
+        Swal.fire(
+            'Senha Fraca',
+            'A senha deve ter pelo menos uma letra maiúscula, uma letra minúscula, um número e um símbolo especial.',
+            'error'
+        );
+        document.getElementById('senha').style.outline = '1px solid rgb(202, 50, 121)';
+        document.getElementById('confirmarsenha').style.outline = '1px solid rgb(202, 50, 121)';
+        return false;
+    }
+    if (senha !== senhaConfirmar) {
+        Swal.fire(
+            'Senhas Diferentes',
+            'O campo de senha e confirmação de senha devem ser iguais.',
+            'error'
+        );
+        document.getElementById('senha').style.outline = '1px solid rgb(202, 50, 121)';
+        document.getElementById('confirmarsenha').style.outline = '1px solid rgb(202, 50, 121)';
+        return false;
+    }
+    return true;
+}
+
+export function ValidarData(data) {
+    let today = new Date();
+    let dataNasc = new Date(data);
+
+    let idade = today.getFullYear() - dataNasc.getFullYear();
+    let m = today.getMonth() - dataNasc.getMonth();
+    let d = today.getDate() - dataNasc.getDate();
+    if (isNaN(dataNasc.getTime())) {
+        Swal.fire(
+            'Data Inválida',
+            'Por favor, insira uma data v&aacute;lida.',
+            'error'
+        );
+        document.getElementById('datanasc').style.border = '1px solid rgb(202, 50, 121)';
+        return false;
+    }
+    if (m < 0 || (m === 0 && d < 0)) {
+        idade--;
+    }
+    if (idade < 18) {
+        Swal.fire(
+            'Menor de idade',
+            'Apenas maiores de idade podem se cadastrar.',
+            'error'
+        );
+        document.getElementById('datanasc').style.border = '1px solid rgb(202, 50, 121)';
+        return false;
+    }
+    return true;
+}
+
+export function formatarData(dataString) {
+    const data = new Date(dataString);
+
+    const dia = String(data.getDate()).padStart(2, '0');
+    const mes = String(data.getMonth() + 1).padStart(2, '0'); // meses começam do 0
+    const ano = String(data.getFullYear());
+
+    return `${ano}-${mes}-${dia}`;
+}
+
+export function verificarNome(nome) {
     const regex = /^[A-Za-zÀ-ÿ-'.,]+(?:\s+[A-Za-zÀ-ÿ-'.,]+)*$/;
     if (nome.length <= 3) {
         Swal.fire({
@@ -23,7 +211,8 @@ function verificarNome(nome) {
     }
     return true;
 }
-function mascaraTelefone(input) {
+
+export function mascaraTelefone(input) {
     let numero = input.value.replace(/\D/g, '');
     // Limita a 14 dígitos
     numero = numero.substring(0, 11);
@@ -37,7 +226,8 @@ function mascaraTelefone(input) {
     }
     input.value = numero;
 }
-function mascaraCNPJ(input) {
+
+export function mascaraCNPJ(input) {
     let cnpj = input.value.replace(/\D/g, '');
 
     // Limita a 14 dígitos
@@ -57,13 +247,15 @@ function mascaraCNPJ(input) {
     input.value = cnpj;
 
 }
-function mascaraCEP(input) {
+
+export function mascaraCEP(input) {
     let cep = input.value.replace(/\D/g, '');
     cep = cep.substring(0, 8);
     cep = cep.replace(/(\d{5})(\d)/, "$1-$2");
     input.value = cep;
 }
-async function buscarCEP(CEP) {
+
+export async function buscarCEP(CEP) {
     if (CEP.length < 8) {
         Swal.fire({
             title:'CEP Inválido',
@@ -92,7 +284,8 @@ async function buscarCEP(CEP) {
     document.getElementById('bairro').value = dados.bairro;
     document.getElementById('endereco').value = dados.logradouro;
 }
-function VerificarCNPJ(cnpj) {
+
+export function VerificarCNPJ(cnpj) {
     cnpj = cnpj.replace(/[^\d]+/g,'');
 
     if (cnpj.length !== 14) return false;
@@ -126,7 +319,8 @@ function VerificarCNPJ(cnpj) {
     resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
     return resultado === parseInt(digitos.charAt(1));
 }
-function msgCNPJ(cnpj) {
+
+export function msgCNPJ(cnpj) {
     if (!VerificarCNPJ(cnpj)) {
         Swal.fire({
             title:'CNPJ Inválido',
@@ -139,16 +333,17 @@ function msgCNPJ(cnpj) {
     return true
 }
 
-function mostrarFotoEstabelecimento(index) {
+export function mostrarFotoEstabelecimento(index) {
     const foto = document.getElementById('Estabelecimentoimg');
     const indexFoto = document.getElementById('indexFoto');
     const spans = document.querySelectorAll('[data-value]')
     if (fotos[index]) {
-        fotoMostrada = index
+        setFotoMostrada(index);
         foto.style.backgroundImage = `url(${URL.createObjectURL(fotos[index])})`;
     }
 }
-function ProximaFoto() {
+
+export function ProximaFoto() {
     const spans =  document.querySelectorAll('[data-value]');
     mostrarFotoEstabelecimento(fotoMostrada+1);
     spans.forEach(span => {
@@ -160,7 +355,8 @@ function ProximaFoto() {
     })
 
 }
-function AnteriorFoto() {
+
+export function AnteriorFoto() {
     const spans =  document.querySelectorAll('[data-value]');
     mostrarFotoEstabelecimento(fotoMostrada-1);
     spans.forEach(span => {
@@ -171,7 +367,8 @@ function AnteriorFoto() {
         }
     })
 }
-function DeletarFoto() {
+
+export function DeletarFoto() {
     const foto = document.getElementById('Estabelecimentoimg');
     const spans = document.getElementById('spans');
 
@@ -206,7 +403,8 @@ function DeletarFoto() {
 
     console.log(fotos.length);
 }
-function adicionarFoto() {
+
+export function adicionarFoto() {
     const input = document.getElementById('fileEstabele');
     const novasFotos = Array.from(input.files);
     const spans = document.getElementById('spans');
@@ -241,115 +439,3 @@ function adicionarFoto() {
     })
     console.log(fotos);
 }
-
-async function adicionarLocalTop() {
-    const nome = document.getElementById('nomeEstabele').value;
-    const email = document.getElementById('email').value;
-    const telefone = document.getElementById('telefone').value;
-    const cnpj = document.getElementById('cnpj').value;
-    const cep = document.getElementById('cep').value;
-    const estado = document.getElementById('estado').value;
-    const cidade = document.getElementById('cidade').value;
-    const bairro = document.getElementById('bairro').value;
-    const endereco = document.getElementById('endereco').value;
-    const numero = document.getElementById('numero').value;
-    const complemento = document.getElementById('complemento').value;
-
-    console.log(nome, email, telefone.replace(/\D/g,""), cnpj.replace(/\D/g,""), cep.replace(/\D/g,""), estado, cidade, bairro, endereco, numero, complemento);
-    if (!verificarNome(nome)) return console.log('nome inválido') ;
-    if (!validarEmail(email)) return console.log('email inválido') ;
-    if (!msgCNPJ(cnpj)) return console.log('cnpj inválido') ;
-
-    // const resposta = await fetch('/auth/estado');
-    // const dados = await resposta.json();
-    const response = await fetch('/api/CriarEstabelecimento', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            Nome: nome,
-            Email: email,
-            Telefone: telefone.replace(/\D/g,""),
-            CNPJ: cnpj.replace(/\D/g,""),
-            CEP: cep.replace(/\D/g,""),
-            Estado: estado,
-            Cidade: cidade,
-            Bairro: bairro,
-            Endereco: endereco,
-            Numero: numero,
-            Complemento: complemento,
-            usuarioId: 1
-        })
-    })
-    if (response.ok) {
-        Swal.fire({
-            title: 'Estabelecimento criado com sucesso',
-            icon: 'success'
-        })
-        if (fotos.length === 0) {
-            return
-        }
-        for (const foto of fotos) {
-            const formData = new FormData();
-            formData.append('file', foto);
-            formData.append('CNPJ', cnpj.replace(/\D/g,""))
-            const resposta = await fetch('/api/CriarFotoEstabelecimento', {
-                method: 'POST',
-                body: formData
-            })
-            if (resposta.ok) {
-                Swal.fire({
-                    title: 'Fotos adicionadas com sucesso',
-                    icon: 'success'
-                })
-                fotos = [];
-                mostrarFotoEstabelecimento(0);
-            } else {
-                const erro = resposta.json()
-                Swal.fire({
-                    title: 'Erro ao adicionar fotos',
-                    text: `${erro.mensagem}`,
-                    icon: 'error'
-                });
-            }
-        }
-    } else {
-        Swal.fire({
-            title: 'Erro ao criar estabelecimento',
-            text: `Verifique os dados e tente novamente${response.status}`,
-            icon: 'error'
-        });
-    }
-}
-
-async function pegarServicos() {
-    const SelectServicos = document.getElementById('tipoServico')
-    const response = await fetch('/api/servicos');
-        console.log(response);
-    if (response.ok) {
-        const servicos = await response.json();
-        SelectServicos.innerHTML = ' ';
-        const SelectDefault = document.createElement('option');
-        SelectDefault.value = 'Selecionar';
-        SelectDefault.textContent = 'Selecione uma opção';
-        SelectServicos.appendChild(SelectDefault);
-        console.log(servicos);
-        servicos.forEach(servico => {
-            const option = document.createElement('option');
-            option.value = servico.id;
-            option.textContent = servico.Nome;
-            SelectServicos.appendChild(option);
-        })
-        const Outro = document.createElement('option');
-        Outro.value = 'Outro';
-        Outro.textContent = 'Outro';
-        SelectServicos.appendChild(Outro);
-    }
-}
-
-if (document.getElementById('cep')) document.getElementById('cep').addEventListener('input', function () {
-    document.getElementById('cep').style.border = '1px solid rgba(62, 62, 62, 1)';
-})
-
-if (document.getElementById('cnpj')) document.getElementById('cnpj').addEventListener('input', function () {
-    document.getElementById('cnpj').style.border = '1px solid rgba(62, 62, 62, 1)';
-})

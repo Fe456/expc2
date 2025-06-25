@@ -7,6 +7,7 @@ import { FotosEstabelecimento } from "../db/tabelaDB.js";
 // import bcrypt from "bcryptjs";
 import { Op } from "sequelize";
 import multer from "multer";
+import path from 'path';
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -19,57 +20,68 @@ const upload = multer({
     }
 })
 
+
 const rota_lojas = Router();
 
 
 rota_lojas
 .get('/api/estabelecimentos-completos', async (req, res) => {
-  const { search, categorias, avaliacoes, precoMin, precoMax, cidade, ordem } = req.query;
+  try {
+    const estabelecimentos = await Estabelecimento.findAll({
+      include: [
+        { model: Oferta, as:'Ofertas', include: [{ model: Avaliacao, as: 'Avaliacao' }] }, // se quiser incluir ofertas e avaliações
+        { model: FotosEstabelecimento, as: 'fotos' } // se tiver relacionamento com fotos
+      ]
+    });
+    res.json(estabelecimentos);
+  } catch (error) {
+    console.error('Erro ao buscar estabelecimentos completos:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+})
+.get('/api/estabelecimento/usuario/:ID_usuario', async (req, res) => {
+  const ID_usuario = req.params.ID_usuario;
 
-  // where dos modelos
-  const whereEst = {};
-  const whereOferta = {};
-  const whereAvali = {};
+  try {
+    const estabelecimentos = await Estabelecimento.findAll({
+      where: { ID_usuario }, // Assumindo que a tabela tem `usuarioId`
+      include: {
+        model: FotosEstabelecimento,
+        as: 'fotos',
+        attributes: ['ID_foto'],
+        limit: 1
+      }
+    });
 
-  if (search) {
-    whereEst.Nome = { [Op.iLike]: `%${search}%` };
+    res.json(estabelecimentos);
+  } catch (error) {
+    console.error("Erro ao buscar estabelecimentos do usuário:", error);
+    res.status(500).json({ erro: "Erro interno no servidor" });
   }
-  if (cidade) {
-    whereEst.endereco = { [Op.iLike]: `%${cidade}%` };
-  }
-  if (precoMin || precoMax) {
-    whereOferta.Valor = {};
-    if (precoMin) whereOferta.Valor[Op.gte] = +precoMin;
-    if (precoMax) whereOferta.Valor[Op.lte] = +precoMax;
-  }
-  if (categorias) {
-    whereOferta.ID_servico = { [Op.in]: categorias.split(',').map(Number) };
-  }
-  if (avaliacoes) {
-    whereAvali.Nota = { [Op.in]: avaliacoes.split(',').map(Number) };
-  }
+})
+.get('/api/estabelecimento/:id', async (req, res) => {
+  const id = req.params.id;
 
-  // busca com includes
-  const estabelecimentos = await Estabelecimento.findAll({
-    where: whereEst,
-    include: [{
-      model: Oferta, as: 'Ofertas', where: whereOferta,
-      include: [{
-        model: Avaliacao, as: 'Avaliacao',
-        where: Object.keys(whereAvali).length ? whereAvali : undefined,
-        required: false
-      }]
-    }]
-  });
-  // ordenação in-memory
-  // if (ordem) {
-  //   estabelecimentos.sort((a, b) => {
-  //     // mesma lógica de before…
-  //     // comparação de preço ou avaliação
-  //   });
-  // }
+  try {
+    const estabelecimento = await Estabelecimento.findOne({
+      where: { ID_estabelecimento: id },
+      include: {
+        model: FotosEstabelecimento,
+        as: 'fotos',
+        attributes: ['ID_foto']
+      }
+    });
 
-  res.json(estabelecimentos);
+    if (!estabelecimento) {
+      return res.status(404).json({ mensagem: "Estabelecimento não encontrado" });
+    }
+
+    console.log('Estabelecimento:', JSON.stringify(estabelecimento, null, 2));
+    res.json(estabelecimento);
+  } catch (error) {
+    console.error("Erro ao buscar estabelecimento:", error);
+    res.status(500).json({ erro: "Erro interno no servidor" });
+  }
 })
 .post('/api/estabelecimento/filtro', async (req, res) => {
     const { nome, nota } = req.body;
@@ -176,23 +188,25 @@ rota_lojas
 // }
 // })
   rota_lojas
-.get('/api/estabelecimento/imagem/:id', async (req, res) => {
-    let ArrayFotos = [];
-    const { id } = req.params;
-    const fotos = await FotosEstabelecimento.findAll({
-      where: { ID_estabelecimento: id }
-    });
-    console.log(id,fotos)
-    if (fotos.length === 0) {
-      return res.status(200).json('https://placehold.co/200x200');
+  .get('/api/estabelecimento/imagem/:id', async (req, res) => {
+    const id = req.params.id;
+
+    try {
+      const foto = await FotosEstabelecimento.findOne({ where: { ID_foto: id } });
+  
+      if (!foto) {
+        res.status(200);
+        res.setHeader('Content-Type', 'image/jpeg');
+        return res.sendFile(path.resolve('../public/imagens/fachada-do-estabelecimento.jpg'));
+      }
+  
+      res.setHeader('Content-Type', foto.TipoFoto || 'image/jpeg');
+      res.send(foto.Foto);
+    } catch (err) {
+      console.error("Erro ao buscar foto:", err);
+      res.status(500).send("Erro interno");
     }
-    // for (const img in fotos) {
-    //     let aux = {'Contet-Type':img.TipoFoto, 'Foto':img.Foto}
-    //     ArrayFotos.append(aux)
-    // }
-    res.set('Content-Type', fotos[0].TipoFoto || 'image/png');
-    res.send(fotos[0].Foto)
-})
+  })
 .get('/api/estabelecimentos', async (req, res) => {
   try {
     // const estabelecimentos = await Estabelecimento.findAll();
@@ -275,6 +289,26 @@ rota_lojas
         console.error("Erro ao cadastrar foto do estabelecimento:", error);
         res.status(500).json({ mensagem: `Erro ao cadastrar foto do estabelecimento: ${error}` });
     }
+})
+.post('/api/avaliacoes', async (req, res) => {
+  try {
+    const { nota, comentario, id_usuario, ID_estabelecimento } = req.body;
+
+    console.log('Recebido:', req.body);
+
+    const novaAvaliacao = await Avaliacao.create({
+      Nota: nota,
+      Comentario: comentario,
+      Data: new Date(),
+      ID_usuario: id_usuario,
+      ID_estabelecimento: parseInt(ID_estabelecimento)
+    });
+
+    res.status(201).json(novaAvaliacao);
+  } catch (error) {
+    console.error("Erro ao criar avaliação:", error);
+    res.status(500).json({ erro: 'Erro ao criar avaliação' });
+  }
 })
 .get('/api/lojas/:id', async (req, res) => {
     const { id } = req.params;

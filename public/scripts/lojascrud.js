@@ -55,7 +55,7 @@ function msgValidaCPF() {
 }
 
 function listarLojas() {
-    fetch('/api/lojas', {
+    fetch('/api/estabelecimentos-completos', {
         method: 'GET'
     })
         .then(response => response.json())
@@ -66,7 +66,7 @@ function listarLojas() {
                 linha.innerHTML = `
                 <td class="linha">${estabelecimento.ID_estabelecimento}</td>
                 <td class="linha"><input type="text" id="nome-${estabelecimento.ID_estabelecimento}" value="${estabelecimento.Nome}" readonly></td>
-                <td class="linha"><input type="text" id="endereco-${estabelecimento.ID_estabelecimento}" value="${estabelecimento.endereco}" readonly></td>
+                <td class="linha"><input type="text" id="endereco-${estabelecimento.ID_estabelecimento}" value="${estabelecimento.Logradouro}" readonly></td>
                 <td class="linha"><input type="text" id="numero-${estabelecimento.ID_estabelecimento}" value="${estabelecimento.Numero}" readonly></td>
                 <td class="linha"><input type="text" id="compl-${estabelecimento.ID_estabelecimento}" value="${estabelecimento.Complemento || ''}" readonly></td>
                 <td class="linha"><input type="text" id="cnpj-${estabelecimento.ID_estabelecimento}" value="${estabelecimento.Cnpj}" readonly></td>

@@ -9,6 +9,7 @@ import session from "express-session";
 import multer from "multer";
 import sequelize from "./db/declaracaoBD.js"
 // import { Usuario } from "./db/tabeladb.js";
+import {Estabelecimento} from "./db/tabelaDB.js";
 import rota_usuarios from "./CRUDs/usuario.js";
 import rota_lojas from "./CRUDs/estabelecimento.js"
 import rota_servicos from "./CRUDs/servicos.js"
@@ -39,7 +40,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // const sessionMaxAge = 10 * 60 * 1000;
 // 1*30*1000 = 30 segs
 //                   min * seg * ms
-const sessionMaxAge = 99 * 60 * 1000;
+const sessionMaxAge = 60 * 60 * 1000;
 
 app.use(session({
     secret: 'localtop',
@@ -67,6 +68,7 @@ app.use((req, res, next) => {
 
 //Configura o servidor para servir arquivos estáticos
 app.use(express.static(path.join(__dirname, "public")));
+app.use('/partials', express.static(path.join(__dirname, 'partials')));
 
 app.use(rota_usuarios)
 app.use(rota_lojas)
@@ -85,6 +87,16 @@ app.get("/auth/estado", (req, res) => {
     } else {
         res.json({ logado: false});
     }
+});
+
+app.get('/auth/estabelecimento-logado', async (req, res) => {
+    const usuarioId = req.session.usuarioId;
+    if (!usuarioId) return res.status(401).json({ erro: 'Usuário não autenticado' });
+
+    const est = await Estabelecimento.findOne({ where: { ID_usuario: usuarioId } });
+    if (!est) return res.status(404).json({ erro: 'Estabelecimento não encontrado' });
+
+    res.json(est);
 });
 
 //Quando acessar http://localhost:3000/ retorna o arquivo index.html
