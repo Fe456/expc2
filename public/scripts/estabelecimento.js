@@ -73,6 +73,39 @@ async function carregarAvaliacoes() {
     }
 }
 
+async function carregarImagens(fotos) {
+    const inner = document.querySelector('.carousel-inner');
+    inner.innerHTML = ''; // Limpa antes
+  
+    for (let i = 0; i < fotos.length; i++) {
+      const foto = fotos[i];
+      try {
+        const response = await fetch(`/api/estabelecimento/imagem/${foto.ID_foto}`);
+        let imgURL = '../imagens/fachada-do-estabelecimento.jpg';
+  
+        if (response.ok) {
+          const blob = await response.blob();
+          imgURL = URL.createObjectURL(blob);
+        }
+  
+        const div = document.createElement('div');
+        div.className = 'carousel-item' + (i === 0 ? ' active' : '');
+        div.innerHTML = `
+          <img src="${imgURL}" class="d-block w-100 rounded" alt="Foto ${i + 1}" style="height: 300px; object-fit: cover;">
+        `;
+        inner.appendChild(div);
+      } catch (err) {
+        console.error('Erro ao carregar imagem:', err);
+      }
+    }
+  
+    // Reinicializa o carrossel
+    const carouselElement = document.querySelector('#carouselExampleInterval');
+    const oldCarousel = bootstrap.Carousel.getInstance(carouselElement);
+    if (oldCarousel) oldCarousel.dispose();
+    new bootstrap.Carousel(carouselElement);
+  }
+
 async function carregarEstabelecimento() {
     const id = localStorage.getItem("estabelecimentoSelecionado");
     console.log('ID usado na requisição:', id);
@@ -94,20 +127,21 @@ async function carregarEstabelecimento() {
         document.getElementById('contato').textContent = est.Telefone || 'Sem telefone cadastrado';
 
         const imgElement = document.querySelector('.carousel-item img');
+        const carouselInner = document.querySelector('.carousel-inner');
+        carouselInner.innerHTML = '';
 
         if (est.fotos && est.fotos.length > 0) {
-        // Busca a imagem via fetch + blob
-        const imgResponse = await fetch(`/api/estabelecimento/imagem/${est.fotos[0].ID_foto}`);
-        if (imgResponse.ok) {
-            const blob = await imgResponse.blob();
-            const url = URL.createObjectURL(blob);
-            imgElement.src = url;
-        } else {
-            imgElement.src = "../imagens/fachada-do-estabelecimento.jpg";
-        }
-        } else {
-        imgElement.src = "../imagens/fachada-do-estabelecimento.jpg";
-        }
+            await carregarImagens(est.fotos);
+          } else {
+            // Se não tiver fotos, exibe a default
+            const inner = document.querySelector('.carousel-inner');
+            inner.innerHTML = `
+              <div class="carousel-item active">
+                <img src="../imagens/fachada-do-estabelecimento.jpg" class="d-block w-100 rounded"
+                  alt="Fachada" style="height: 300px; object-fit: cover;">
+              </div>
+            `;
+          }
 
     } catch (err) {
         console.error("Erro ao carregar dados:", err);

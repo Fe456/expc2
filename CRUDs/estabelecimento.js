@@ -272,23 +272,36 @@ rota_lojas
         res.status(500).json({ mensagem: `Erro ao cadastrar estabelecimento: ${error}` }); // Retorne JSON
     }
 })
-.post('/api/CriarFotoEstabelecimento', upload.single('file'), async (req, res) => {
-    const { CNPJ } = req.body;
-    const lojas = await Estabelecimento.findOne({ where: { Cnpj: CNPJ } });
+.post('/api/CriarFotoEstabelecimento', upload.array('file'), async (req, res) => {
+  const { CNPJ } = req.body;
 
-    try {
-        await FotosEstabelecimento.create({
-            Foto: req.file.buffer,
-            TipoFoto: req.file.mimetype,
-            ID_estabelecimento: lojas.ID_estabelecimento
-        });
-
-        res.status(200).json({ mensagem: "Foto do estabelecimento cadastrada com sucesso." });
-
-    } catch (error) {
-        console.error("Erro ao cadastrar foto do estabelecimento:", error);
-        res.status(500).json({ mensagem: `Erro ao cadastrar foto do estabelecimento: ${error}` });
+  try {
+    const loja = await Estabelecimento.findOne({ where: { Cnpj: CNPJ } });
+    if (!loja) {
+      return res.status(404).json({ mensagem: "Estabelecimento não encontrado." });
     }
+
+    const idEstabelecimento = loja.ID_estabelecimento;
+
+    // Verifica se há arquivos
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ mensagem: "Nenhuma imagem enviada." });
+    }
+
+      for (const file of req.files) {
+          await FotosEstabelecimento.create({
+              Foto: file.buffer,
+              TipoFoto: file.mimetype,
+              ID_estabelecimento: idEstabelecimento
+          });
+      }
+
+      res.status(200).json({ mensagem: `${req.files.length} imagens salvas com sucesso.` });
+
+  } catch (error) {
+      console.error("Erro ao cadastrar imagens:", error);
+      res.status(500).json({ mensagem: `Erro ao cadastrar imagens: ${error}` });
+  }
 })
 .post('/api/avaliacoes', async (req, res) => {
   try {

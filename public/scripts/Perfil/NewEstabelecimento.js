@@ -47,14 +47,18 @@ export async function adicionarLocalTop() {
         if (fotos.length === 0) {
             return
         }
-        for (const foto of fotos) {
-            const formData = new FormData();
-            formData.append('file', foto);
-            formData.append('CNPJ', cnpj.replace(/\D/g,""))
-            const resposta = await fetch('/api/CriarFotoEstabelecimento', {
-                method: 'POST',
-                body: formData
-            })
+        const formData = new FormData();
+        formData.append("CNPJ", cnpj.replace(/\D/g, ""));
+        const arquivos = document.getElementById('fileEstabele').files;
+        
+        for (let i = 0; i < arquivos.length; i++) {
+          formData.append("file", arquivos[i]); // o mesmo nome 'file' para upload.array
+        }
+        
+        const resposta = await fetch('/api/CriarFotoEstabelecimento', {
+          method: 'POST',
+          body: formData
+        });
             if (resposta.ok) {
                 Swal.fire({
                     title: 'Fotos adicionadas com sucesso',
@@ -70,7 +74,6 @@ export async function adicionarLocalTop() {
                     icon: 'error'
                 });
             }
-        }
     } else {
         Swal.fire({
             title: 'Erro ao criar estabelecimento',
